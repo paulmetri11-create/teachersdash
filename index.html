@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Classroom Hub | Teacher Edition</title>
-    <meta name="description" content="A minimalist, aesthetic classroom management tool featuring a resizable timer, student picker, and group maker.">
+    <title>Teachers Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -29,12 +28,21 @@
         }
         @keyframes meshGradient { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
-        /* Sidebar */
+        /* Sidebar System */
         .sidebar-left {
             position: fixed; left: 20px; top: 20px; bottom: 20px; width: 300px;
             background: var(--panel); backdrop-filter: blur(30px);
             border: 1px solid var(--border); border-radius: 24px;
-            padding: 20px; display: flex; flex-direction: column; z-index: 10;
+            padding: 20px; display: flex; flex-direction: column; z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-left.collapsed { transform: translateX(-320px); }
+        .sidebar-toggle {
+            position: absolute; right: -36px; top: 50%; transform: translateY(-50%);
+            width: 36px; height: 70px; background: var(--panel); backdrop-filter: blur(30px);
+            border: 1px solid var(--border); border-left: none; border-radius: 0 16px 16px 0;
+            color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; transition: 0.2s; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
         }
 
         #name-box { 
@@ -44,98 +52,102 @@
 
         .ad-container {
             width: 100%; height: 90px; margin-top: 15px; border-radius: 15px;
-            background: rgba(255,255,255,0.02); border: 1px dashed var(--border);
+            background: rgba(255, 255, 255, 0.05); border: 1px dashed var(--border);
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.6rem; color: rgba(255,255,255,0.2); text-transform: uppercase;
+            font-size: 0.6rem; color: rgba(255,255,255,0.3); text-transform: uppercase; flex-shrink: 0;
         }
 
         .footer-links {
             margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);
-            display: flex; gap: 15px; justify-content: center;
+            display: flex; gap: 15px; justify-content: center; flex-shrink: 0;
         }
         .footer-links span { font-size: 0.65rem; opacity: 0.5; cursor: pointer; text-transform: uppercase; }
         .footer-links span:hover { opacity: 1; color: var(--accent); }
 
-        /* Dock */
+        /* Dock System */
         .tool-dock {
             position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
             background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px);
             border: 1px solid var(--border); border-radius: 40px;
-            padding: 15px; display: flex; flex-direction: column; gap: 15px; z-index: 100;
+            padding: 15px; display: flex; flex-direction: column; gap: 15px; z-index: 500;
         }
-
         .dock-btn {
-            width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--border);
+            position: relative; width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--border);
             background: var(--glass); color: white; cursor: pointer; display: flex;
             align-items: center; justify-content: center; transition: 0.3s;
         }
         .dock-btn:hover { background: var(--accent); transform: scale(1.1); }
-        .dock-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; }
+        .dock-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; pointer-events: none; }
+        .dock-btn::before {
+            content: attr(data-tooltip); position: absolute; right: 130%; top: 50%; transform: translateY(-50%);
+            background: rgba(10, 10, 15, 0.95); border: 1px solid var(--border);
+            padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 500;
+            white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.2s;
+        }
+        .dock-btn:hover::before { opacity: 1; right: 140%; }
 
-        /* Windows & Resizing */
+        /* Window System */
         .window {
             position: absolute; background: var(--panel); backdrop-filter: blur(40px);
             border: 1px solid var(--border); border-radius: 20px; padding: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: none; flex-direction: column;
-            z-index: 50; 
-            resize: both; /* Resizable feature */
-            overflow: hidden; /* Important for clean window content */
-            min-width: 250px; min-height: 200px;
-            max-width: 80vw; max-height: 80vh;
+            z-index: 50; resize: both; overflow: hidden; min-width: 250px; min-height: 200px;
         }
-        
         .window-header { 
             display: flex; justify-content: space-between; padding-bottom: 10px; 
             margin-bottom: 10px; border-bottom: 1px solid var(--border); cursor: move;
             font-size: 0.65rem; text-transform: uppercase; opacity: 0.4; flex-shrink: 0;
         }
+        .window-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Timer Flash */
-        @keyframes timerAlert {
-            0%, 100% { border-color: var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-            50% { border-color: var(--red); box-shadow: 0 0 35px rgba(239, 68, 68, 0.6); }
-        }
-        .flashing { animation: timerAlert 1s infinite !important; }
+        /* Timer Features */
+        #win-timer { min-width: 260px; min-height: 280px; }
+        #win-timer.alarm-active { animation: flashAlarm 0.4s infinite; }
+        @keyframes flashAlarm { 0%, 100% { background: var(--panel); } 50% { background: rgba(239, 68, 68, 0.5); } }
 
-        /* General UI */
+        /* UI Elements */
         .btn-main { width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: white; border: none; cursor: pointer; font-weight: 500; flex-shrink: 0; }
         .btn-sub { background: var(--glass); border: 1px solid var(--border); padding: 8px; border-radius: 8px; color: white; cursor: pointer; font-size: 0.75rem; }
         .p-btn { padding: 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--glass); color: white; cursor: pointer; font-size: 0.7rem; }
         .p-btn.active { background: var(--accent); border-color: var(--accent); }
         
-        .light-item { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; opacity: 0.3; }
+        /* Traffic Light */
+        .light-item { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; opacity: 0.3; transition: 0.3s; }
         .light-item.active { opacity: 1; }
         .light-bulb { width: 30px; height: 30px; border-radius: 50%; background: #111; border: 1px solid rgba(255,255,255,0.1); }
         .active .red { background: var(--red); box-shadow: 0 0 15px var(--red); }
         .active .yellow { background: var(--yellow); box-shadow: 0 0 15px var(--yellow); }
         .active .green { background: var(--green); box-shadow: 0 0 15px var(--green); }
 
-        #clock-fixed { position: fixed; bottom: 35px; right: 90px; text-align: right; pointer-events: none; }
-        #time { font-size: 4.5rem; font-weight: 300; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
-        #greet-area { font-size: 1.3rem; color: var(--accent); }
+        /* Text Area Placeholder */
+        #teacher-notes::placeholder { color: rgba(255,255,255,0.2); font-style: italic; }
 
-        .name-pill { background: rgba(255,255,255,0.06); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin: 2px; border: 1px solid var(--border); }
-        .text-content { font-size: 0.85rem; line-height: 1.6; opacity: 0.8; user-select: text; overflow-y: auto; }
+        /* Clock & Date Area */
+        #clock-fixed { position: fixed; bottom: 35px; right: 90px; text-align: right; pointer-events: none; }
+        #greet-area { font-size: 1.3rem; color: var(--accent); }
+        #date-area { font-size: 1.1rem; opacity: 0.7; font-weight: 300; margin-bottom: -5px; }
+        #time { font-size: 4.5rem; font-weight: 300; letter-spacing: -2px; }
     </style>
 </head>
 <body>
 
 <div id="bg-mesh"></div>
 
-<div class="sidebar-left">
-    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px;">
+<div class="sidebar-left" id="sidebar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">◂</button>
+    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; flex-shrink: 0;">
         <button class="p-btn active" onclick="setP(0)">P1</button>
         <button class="p-btn" onclick="setP(1)">P2</button>
         <button class="p-btn" onclick="setP(2)">P3</button>
         <button class="p-btn" onclick="setP(3)">P4</button>
     </div>
-    <textarea id="name-box" placeholder="Student names..." oninput="save()"></textarea>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top:10px;">
+    <textarea id="name-box" placeholder="Student names (one per line)..." oninput="save()"></textarea>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top:10px; flex-shrink: 0;">
         <button class="btn-sub" onclick="exportNames()">Export</button>
         <button class="btn-sub" onclick="document.getElementById('import-file').click()">Import</button>
         <input type="file" id="import-file" style="display:none" onchange="importNames(event)">
     </div>
-    <div class="ad-container"><span>Advertisement</span></div>
+    <div class="ad-container"><span>Advertisement Space</span></div>
     <div class="footer-links">
         <span onclick="toggleWin('win-about')">About</span>
         <span onclick="toggleWin('win-privacy')">Privacy</span>
@@ -143,78 +155,113 @@
 </div>
 
 <div class="tool-dock">
-    <button class="dock-btn" onclick="toggleWin('win-timer')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
-    <button class="dock-btn" onclick="toggleWin('win-picker')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
-    <button class="dock-btn" onclick="toggleWin('win-traffic')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><circle cx="12" cy="7" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="17" r="2.5"/></svg></button>
-    <button class="dock-btn" onclick="toggleWin('win-groups')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
-    <button class="dock-btn" onclick="toggleWin('win-notes')"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+    <button class="dock-btn" data-tooltip="Class Timer" onclick="toggleWin('win-timer')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </button>
+    <button class="dock-btn" data-tooltip="Pick a Student" onclick="toggleWin('win-picker')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+    <button class="dock-btn" data-tooltip="Voice Levels" onclick="toggleWin('win-traffic')">
+        <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="5" ry="5"></rect><circle cx="12" cy="7" r="2.5"></circle><circle cx="12" cy="12" r="2.5"></circle><circle cx="12" cy="17" r="2.5"></circle></svg>
+    </button>
+    <button class="dock-btn" data-tooltip="Group Maker" onclick="toggleWin('win-groups')">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </button>
+    <button class="dock-btn" data-tooltip="Teacher Notes" onclick="toggleWin('win-notes')">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
 </div>
 
 <div id="win-timer" class="window" style="width: 260px; height: 280px; top: 60px; left: 350px;">
     <div class="window-header"><span>Timer</span><span onclick="toggleWin('win-timer')" style="cursor:pointer">✕</span></div>
-    <div id="t-disp" style="flex-grow:1; display:flex; align-items:center; justify-content:center; font-size: 3.5rem; color: var(--accent);">0:00</div>
-    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; margin-bottom:10px;">
-        <button class="btn-sub" onclick="adj(60)">+1m</button>
-        <button class="btn-sub" onclick="adj(10)">+10s</button>
-        <button class="btn-sub" onclick="resetT()">Reset</button>
+    <div class="window-content">
+        <div id="t-disp" style="flex-grow:1; display:flex; align-items:center; justify-content:center; font-size: 4rem; color: var(--accent);">0:00</div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; margin-bottom:10px;">
+            <button class="btn-sub" onclick="adj(60)">+1m</button>
+            <button class="btn-sub" onclick="adj(10)">+10s</button>
+            <button class="btn-sub" onclick="resetT()">Reset</button>
+        </div>
+        <button class="btn-main" id="t-run" onclick="runT()">Start</button>
     </div>
-    <button class="btn-main" id="t-run" onclick="runT()">Start</button>
-</div>
-
-<div id="win-picker" class="window" style="width: 220px; height: 200px; top: 60px; left: 630px;">
-    <div class="window-header"><span>Picker</span><span onclick="toggleWin('win-picker')" style="cursor:pointer">✕</span></div>
-    <div id="p-name" style="flex-grow:1; display:flex; align-items:center; justify-content:center; font-size: 1.5rem; color: var(--accent); text-align:center;">---</div>
-    <button class="btn-main" onclick="pick(event)">Pick Student</button>
 </div>
 
 <div id="win-traffic" class="window" style="width: 200px; height: 220px; top: 60px; left: 870px;">
     <div class="window-header"><span>Voice Levels</span><span onclick="toggleWin('win-traffic')" style="cursor:pointer">✕</span></div>
-    <div style="flex-grow:1;">
+    <div class="window-content">
         <div id="item-red" class="light-item" onclick="setLight('red')"><div class="light-bulb red"></div><span>Silent</span></div>
         <div id="item-yellow" class="light-item" onclick="setLight('yellow')"><div class="light-bulb yellow"></div><span>Whisper</span></div>
         <div id="item-green" class="light-item" onclick="setLight('green')"><div class="light-bulb green"></div><span>Speaking</span></div>
     </div>
 </div>
 
-<div id="win-groups" class="window" style="width: 400px; height: 400px; top: 340px; left: 350px;">
-    <div class="window-header"><span>Groups</span><span onclick="toggleWin('win-groups')" style="cursor:pointer">✕</span></div>
-    <div id="g-res" style="flex-grow: 1; overflow-y: auto; margin-bottom: 10px;"></div>
-    <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:10px;">
-        <button class="btn-sub" onclick="adjG(-1)">-</button>
-        <span id="g-val" style="font-size:1.2rem;">4</span>
-        <button class="btn-sub" onclick="adjG(1)">+</button>
+<div id="win-picker" class="window" style="width: 260px; height: 200px; top: 60px; left: 630px;">
+    <div class="window-header"><span>Student Picker</span><span onclick="toggleWin('win-picker')" style="cursor:pointer">✕</span></div>
+    <div class="window-content">
+        <div id="p-name" style="flex-grow:1; display:flex; align-items:center; justify-content:center; font-size: 1.8rem; color: var(--accent); text-align:center; padding: 10px;">---</div>
+        <div id="p-count-info" style="font-size: 0.65rem; text-align: center; opacity: 0.5; margin-bottom: 5px;"></div>
+        <button class="btn-main" onclick="pick(event)">Pick Student</button>
     </div>
-    <button class="btn-main" onclick="doG(event)">Shuffle</button>
+</div>
+
+<div id="win-groups" class="window" style="width: 400px; height: 400px; top: 340px; left: 350px;">
+    <div class="window-header"><span>Group Maker</span><span onclick="toggleWin('win-groups')" style="cursor:pointer">✕</span></div>
+    <div class="window-content">
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px; flex-shrink:0;">
+            <span style="font-size:0.8rem; opacity:0.7">Groups:</span>
+            <input type="number" id="g-count" value="4" min="1" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; border-radius:8px; padding:10px; width:60px;">
+            <button class="btn-main" onclick="doG(event)">Shuffle</button>
+        </div>
+        <div id="g-res" style="flex-grow: 1; overflow-y: auto;"></div>
+    </div>
 </div>
 
 <div id="win-notes" class="window" style="width: 320px; height: 350px; top: 260px; left: 630px;">
-    <div class="window-header"><span>Teacher Notes</span><span onclick="toggleWin('win-notes')" style="cursor:pointer">✕</span></div>
-    <textarea id="teacher-notes" placeholder="Auto-saves notes..." oninput="saveNotes()" style="flex-grow:1; background:rgba(0,0,0,0.25); color:#fff; border:1px solid var(--border); border-radius:12px; padding:12px; resize:none; outline:none;"></textarea>
-</div>
-
-<div id="win-about" class="window" style="width: 400px; height: 300px; top: 150px; left: 450px;">
-    <div class="window-header"><span>About</span><span onclick="toggleWin('win-about')" style="cursor:pointer">✕</span></div>
-    <div class="text-content">
-        <p>Aesthetic Classroom Hub is a modern, dark-mode utility designed to make classroom management beautiful and effortless. No data is ever uploaded; everything stays in your browser.</p>
+    <div class="window-header"><span>Notes</span><span onclick="toggleWin('win-notes')" style="cursor:pointer">✕</span></div>
+    <div class="window-content">
+        <textarea id="teacher-notes" placeholder="Start typing your notes here... (They will auto-save automatically)" oninput="saveNotes()" style="flex-grow:1; background:rgba(0,0,0,0.25); color:#fff; border:1px solid var(--border); border-radius:12px; padding:15px; resize:none; outline:none;"></textarea>
     </div>
 </div>
 
-<div id="win-privacy" class="window" style="width: 400px; height: 300px; top: 170px; left: 470px;">
-    <div class="window-header"><span>Privacy</span><span onclick="toggleWin('win-privacy')" style="cursor:pointer">✕</span></div>
-    <div class="text-content">
-        <p>This site uses cookies only for functional local storage and advertising purposes. We do not collect or sell student name data.</p>
+<div id="win-about" class="window" style="width: 450px; height: 300px; top: 150px; left: 400px;">
+    <div class="window-header"><span>About</span><span onclick="toggleWin('win-about')" style="cursor:pointer">✕</span></div>
+    <div class="window-content" style="font-size: 0.9rem; line-height: 1.6; opacity: 0.8; overflow-y: auto;">
+        <h3 style="color:var(--accent); margin-bottom:10px;">Teacher Productivity Suite</h3>
+        <p>Built for efficiency. All student names, group settings, and teacher notes are stored locally in your browser to ensure privacy.</p>
+        <p style="margin-top:10px;">The Student Picker ensures everyone gets a turn before repeating names.</p>
+    </div>
+</div>
+
+<div id="win-privacy" class="window" style="width: 450px; height: 300px; top: 180px; left: 430px;">
+    <div class="window-header"><span>Privacy Policy</span><span onclick="toggleWin('win-privacy')" style="cursor:pointer">✕</span></div>
+    <div class="window-content" style="font-size: 0.9rem; line-height: 1.6; opacity: 0.8; overflow-y: auto;">
+        <h3 style="color:var(--accent); margin-bottom:10px;">Your Data stays Yours</h3>
+        <p>This application does not upload your student names to any server. Everything is stored in your browser's local cache.</p>
+        <p style="margin-top:10px;">Ads are served by Google and may use cookies for personalization.</p>
     </div>
 </div>
 
 <div id="clock-fixed">
     <div id="greet-area">Good Morning</div>
+    <div id="date-area">Loading Date...</div>
     <h1 id="time">00:00:00</h1>
 </div>
 
 <script>
-    const STORAGE_KEY = 'classroom_v6_final';
-    const NOTES_KEY = 'classroom_notes_v6';
-    let pIdx = 0, gNum = 4, store = JSON.parse(localStorage.getItem(STORAGE_KEY)) || ["","","",""], secs = 0, tId = null;
+    const STORAGE_KEY = 'teachers_dash_v18';
+    const NOTES_KEY = 'teachers_dash_notes_v18';
+    let pIdx = 0, store = JSON.parse(localStorage.getItem(STORAGE_KEY)) || ["","","",""], secs = 0, tId = null;
+    let pickPiles = [[],[],[],[]]; // Non-repeating student pick piles
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(freq, type, dur) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + dur);
+    }
 
     function init() {
         setInterval(tick, 1000); tick();
@@ -226,15 +273,23 @@
     function tick() {
         const d = new Date();
         document.getElementById('time').innerText = d.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit', second:'2-digit', hour12: true});
+        const dStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        document.getElementById('date-area').innerText = dStr.replace(',', '');
         const h = d.getHours();
         document.getElementById('greet-area').innerText = h < 12 ? "Good Morning" : h < 17 ? "Good Afternoon" : "Good Evening";
     }
 
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        sb.classList.toggle('collapsed');
+        sb.querySelector('.sidebar-toggle').innerText = sb.classList.contains('collapsed') ? '▸' : '◂';
+    }
+
     function toggleWin(id) {
         const w = document.getElementById(id);
-        const visible = w.style.display === 'flex';
-        w.style.display = visible ? 'none' : 'flex';
-        if(!visible) bringToFront(w);
+        const vis = w.style.display === 'flex';
+        w.style.display = vis ? 'none' : 'flex';
+        if(!vis) bringToFront(w);
     }
 
     function bringToFront(el) {
@@ -243,91 +298,32 @@
         el.style.zIndex = maxZ + 1;
     }
 
-    /* Fixed Import */
-    function importNames(e) {
-        const file = e.target.files[0]; if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => { 
-            document.getElementById('name-box').value = ev.target.result; 
-            save(); 
-            e.target.value = ""; // Crucial fix: reset the input
-        };
-        reader.readAsText(file);
-    }
-
-    /* Fixed Timer */
-    function stopFlash() { document.getElementById('win-timer').classList.remove('flashing'); }
-    function adj(s) { secs = Math.max(0, secs + s); renderT(); stopFlash(); }
-    function resetT() { secs = 0; renderT(); stopFlash(); if(tId) runT(); }
-    function renderT() {
-        const m = Math.floor(secs/60), s = secs%60;
-        document.getElementById('t-disp').innerText = `${m}:${String(s).padStart(2,'0')}`;
-    }
-    function runT() {
-        const b = document.getElementById('t-run');
-        if(tId) { clearInterval(tId); tId=null; b.innerText="Start"; } 
-        else {
-            stopFlash(); if(secs <= 0) return;
-            b.innerText="Stop";
-            tId = setInterval(() => { 
-                secs--; renderT();
-                if(secs <= 0) { 
-                    clearInterval(tId); tId=null; b.innerText="Start"; 
-                    document.getElementById('win-timer').classList.add('flashing');
-                    beep(600); setTimeout(() => beep(800), 200);
-                } 
-            }, 1000);
-        }
+    function setLight(color) {
+        playSound(600, 'sine', 0.1); 
+        document.querySelectorAll('.light-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(`item-${color}`).classList.add('active');
     }
 
     function setP(i) {
         pIdx = i;
         document.querySelectorAll('.p-btn').forEach((b, x) => b.classList.toggle('active', x === i));
         document.getElementById('name-box').value = store[i] || "";
+        resetPickerQueue();
     }
-    function save() { store[pIdx] = document.getElementById('name-box').value; localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); }
+
+    function save() { 
+        store[pIdx] = document.getElementById('name-box').value; 
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); 
+        resetPickerQueue();
+    }
+    
     function saveNotes() { localStorage.setItem(NOTES_KEY, document.getElementById('teacher-notes').value); }
-    function exportNames() {
-        const blob = new Blob([store[pIdx]], {type: "text/plain"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `Period_${pIdx+1}.txt`;
-        a.click();
-    }
-
-    function pick(e) {
-        const n = store[pIdx].split('\n').filter(x => x.trim());
-        if(!n.length) return;
-        document.getElementById('p-name').innerText = n[Math.floor(Math.random()*n.length)];
-        confetti({ origin: { x: e.clientX/window.innerWidth, y: (e.clientY/window.innerHeight) - 0.1 }, particleCount: 30 });
-    }
-
-    function adjG(v) { gNum = Math.max(2, gNum+v); document.getElementById('g-val').innerText = gNum; }
-    function doG(e) {
-        const n = store[pIdx].split('\n').filter(x => x.trim()).sort(() => 0.5 - Math.random());
-        const box = document.getElementById('g-res'); if(!n.length) return;
-        box.innerHTML = ""; let grps = Array.from({length: gNum}, () => []);
-        n.forEach((name, i) => grps[i % gNum].push(name));
-        grps.forEach((g, i) => {
-            if(g.length) {
-                let pills = g.map(name => `<span class="name-pill">${name}</span>`).join('');
-                box.innerHTML += `<div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:12px; border:1px solid var(--border); margin-bottom:8px;"><span style="color:var(--accent); font-size:0.7rem; display:block; margin-bottom:4px;">Group ${i+1}</span>${pills}</div>`;
-            }
-        });
-        confetti({ origin: { x: e.clientX/window.innerWidth, y: (e.clientY/window.innerHeight) - 0.2 }, particleCount: 40 });
-    }
-
-    function setLight(color) {
-        document.querySelectorAll('.light-item').forEach(i => i.classList.remove('active'));
-        document.getElementById(`item-${color}`).classList.add('active');
-        beep(900);
-    }
 
     function makeDraggable(el) {
         let p1=0, p2=0, p3=0, p4=0;
         const h = el.querySelector(".window-header");
         h.onmousedown = (e) => {
-            if(e.target.style.cursor === 'pointer') return; // Don't drag if clicking 'X'
+            if(e.target.style.cursor === 'pointer') return;
             bringToFront(el);
             p3=e.clientX; p4=e.clientY;
             document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
@@ -338,14 +334,90 @@
         };
     }
 
-    function beep(freq) {
-        try {
-            const a = new (window.AudioContext || window.webkitAudioContext)(); 
-            const o = a.createOscillator(); const g = a.createGain();
-            o.type = 'sine'; o.frequency.setValueAtTime(freq, a.currentTime);
-            o.connect(g); g.connect(a.destination); o.start();
-            g.gain.exponentialRampToValueAtTime(0.00001, a.currentTime + 1); o.stop(a.currentTime + 1);
-        } catch(err) {}
+    function importNames(e) {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => { 
+            document.getElementById('name-box').value = ev.target.result; 
+            save(); 
+            e.target.value = ""; 
+        };
+        reader.readAsText(file);
+    }
+    
+    function exportNames() {
+        const b = new Blob([document.getElementById('name-box').value], {type: "text/plain"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(b);
+        a.download = `Period_${pIdx+1}.txt`;
+        a.click();
+    }
+
+    // Timer Logic
+    function adj(s) { secs = Math.max(0, secs + s); document.getElementById('win-timer').classList.remove('alarm-active'); renderT(); }
+    function resetT() { secs = 0; document.getElementById('win-timer').classList.remove('alarm-active'); renderT(); if(tId) runT(); }
+    function renderT() {
+        const m = Math.floor(secs/60), s = secs%60;
+        document.getElementById('t-disp').innerText = `${m}:${String(s).padStart(2,'0')}`;
+    }
+    function runT() {
+        const b = document.getElementById('t-run'), win = document.getElementById('win-timer');
+        if(tId) { clearInterval(tId); tId=null; b.innerText="Start"; } 
+        else {
+            if(secs <= 0) return;
+            win.classList.remove('alarm-active');
+            b.innerText="Stop";
+            tId = setInterval(() => { 
+                secs--; renderT();
+                if(secs <= 0) { 
+                    clearInterval(tId); tId=null; b.innerText="Start"; 
+                    win.classList.add('alarm-active');
+                    playSound(440, 'square', 1);
+                } 
+            }, 1000);
+        }
+    }
+
+    // NEW STUDENT PICKER LOGIC (NON-REPEATING)
+    function resetPickerQueue() {
+        const names = store[pIdx].split('\n').filter(x => x.trim());
+        pickPiles[pIdx] = [...names].sort(() => 0.5 - Math.random());
+        updatePickerUI(false);
+    }
+
+    function updatePickerUI(shuffled) {
+        const remaining = pickPiles[pIdx].length;
+        const total = store[pIdx].split('\n').filter(x => x.trim()).length;
+        document.getElementById('p-count-info').innerText = shuffled ? `List Reset! ${remaining}/${total} Left` : `${remaining}/${total} names left`;
+    }
+
+    function pick(e) {
+        const totalNames = store[pIdx].split('\n').filter(x => x.trim());
+        if(!totalNames.length) return;
+
+        if (pickPiles[pIdx].length === 0) {
+            pickPiles[pIdx] = [...totalNames].sort(() => 0.5 - Math.random());
+            updatePickerUI(true);
+        } else {
+            updatePickerUI(false);
+        }
+
+        const chosen = pickPiles[pIdx].pop();
+        document.getElementById('p-name').innerText = chosen;
+        confetti({ origin: { x: e.clientX/window.innerWidth, y: (e.clientY/window.innerHeight) - 0.1 }, particleCount: 30 });
+    }
+
+    // Group Maker
+    function doG(e) {
+        const n = store[pIdx].split('\n').filter(x => x.trim()).sort(() => 0.5 - Math.random());
+        const box = document.getElementById('g-res'); if(!n.length) return;
+        const count = parseInt(document.getElementById('g-count').value) || 2;
+        box.innerHTML = ""; let groups = Array.from({length: count}, () => []);
+        n.forEach((name, i) => groups[i % count].push(name));
+        groups.forEach((g, i) => {
+            if(g.length) box.innerHTML += `<div style="margin-bottom:10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border: 1px solid var(--border);"><strong>Group ${i+1}:</strong> ${g.join(', ')}</div>`;
+        });
+        confetti({ origin: { x: e.clientX/window.innerWidth, y: (e.clientY/window.innerHeight) - 0.2 }, particleCount: 40 });
     }
 
     window.onload = init;
