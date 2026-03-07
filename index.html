@@ -3,424 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teachers Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <title>Electric vs. Gas Vehicles: TCO Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.06);
-            --panel: rgba(10, 10, 15, 0.92);
-            --accent: #818cf8;
-            --border: rgba(255, 255, 255, 0.1);
-            --red: #ef4444;
-            --yellow: #f59e0b;
-            --green: #10b981;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --accent: #2563eb;
+            --ev-green: #059669;
+            --border: #e2e8f0;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
-        body { height: 100vh; width: 100vw; background: #020617; color: white; overflow: hidden; user-select: none; }
-
-        #bg-mesh {
-            position: fixed; inset: 0; z-index: -1;
-            background: linear-gradient(135deg, #020617, #1e1b4b, #064e3b, #1e293b, #4c1d95);
-            background-size: 400% 400%;
-            animation: meshGradient 60s ease-in-out infinite; 
-        }
-        @keyframes meshGradient { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-
-        /* Sidebar System */
-        .sidebar-left {
-            position: fixed; left: 20px; top: 20px; bottom: 20px; width: 300px;
-            background: var(--panel); backdrop-filter: blur(30px);
-            border: 1px solid var(--border); border-radius: 24px;
-            padding: 20px; display: flex; flex-direction: column; z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .sidebar-left.collapsed { transform: translateX(-320px); }
-        .sidebar-toggle {
-            position: absolute; right: -36px; top: 50%; transform: translateY(-50%);
-            width: 36px; height: 70px; background: var(--panel); backdrop-filter: blur(30px);
-            border: 1px solid var(--border); border-left: none; border-radius: 0 16px 16px 0;
-            color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; transition: 0.2s; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--slate-50); 
+            color: var(--slate-900); 
+            margin: 0; 
+            line-height: 1.6;
         }
 
-        #name-box { 
-            user-select: text; flex-grow: 1; background: rgba(0,0,0,0.25); border: 1px solid var(--border); 
-            color: #fff; padding: 12px; border-radius: 15px; resize: none; font-size: 0.9rem; outline: none;
+        .container { 
+            max-width: 850px; 
+            margin: 0 auto; 
+            padding: 60px 20px;
         }
 
-        .ad-container {
-            width: 100%; height: 90px; margin-top: 15px; border-radius: 15px;
-            background: rgba(255, 255, 255, 0.05); border: 1px dashed var(--border);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.6rem; color: rgba(255,255,255,0.3); text-transform: uppercase; flex-shrink: 0;
+        header { text-align: center; margin-bottom: 50px; }
+        header h1 { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 10px; }
+        header p { color: #64748b; font-size: 1.1rem; }
+
+        .main-card {
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+            margin-bottom: 40px;
         }
 
-        .footer-links {
-            margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);
-            display: flex; gap: 15px; justify-content: center; flex-shrink: 0;
+        .toggle-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
         }
-        .footer-links span { font-size: 0.65rem; opacity: 0.5; cursor: pointer; text-transform: uppercase; }
-        .footer-links span:hover { opacity: 1; color: var(--accent); }
+        .toggle-pill {
+            background: var(--slate-100);
+            padding: 4px;
+            border-radius: 12px;
+            display: inline-flex;
+            gap: 4px;
+        }
+        .toggle-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: 0.2s;
+            background: transparent;
+            color: #64748b;
+        }
+        .toggle-btn.active {
+            background: #ffffff;
+            color: var(--slate-900);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
 
-        /* Dock System */
-        .tool-dock {
-            position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px);
-            border: 1px solid var(--border); border-radius: 40px;
-            padding: 15px; display: flex; flex-direction: column; gap: 15px; z-index: 500;
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
         }
-        .dock-btn {
-            position: relative; width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--border);
-            background: var(--glass); color: white; cursor: pointer; display: flex;
-            align-items: center; justify-content: center; transition: 0.3s;
+        .section-header {
+            grid-column: span 2;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            margin-top: 20px;
+            border-bottom: 1px solid var(--slate-100);
+            padding-bottom: 8px;
         }
-        .dock-btn:hover { background: var(--accent); transform: scale(1.1); }
-        .dock-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; pointer-events: none; }
-        .dock-btn::before {
-            content: attr(data-tooltip); position: absolute; right: 130%; top: 50%; transform: translateY(-50%);
-            background: rgba(10, 10, 15, 0.95); border: 1px solid var(--border);
-            padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 500;
-            white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.2s;
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; color: var(--slate-800); }
+        input {
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: 0.2s;
         }
-        .dock-btn:hover::before { opacity: 1; right: 140%; }
+        input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        .hint { font-size: 0.75rem; color: #94a3b8; margin-top: 6px; }
 
-        /* Window System */
-        .window {
-            position: absolute; background: var(--panel); backdrop-filter: blur(40px);
-            border: 1px solid var(--border); border-radius: 20px; padding: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: none; flex-direction: column;
-            z-index: 50; resize: both; overflow: hidden; min-width: 250px; min-height: 200px;
+        .btn-analyze {
+            width: 100%;
+            padding: 18px;
+            background: var(--slate-900);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.2s;
         }
-        .window-header { 
-            display: flex; justify-content: space-between; padding-bottom: 10px; 
-            margin-bottom: 10px; border-bottom: 1px solid var(--border); cursor: move;
-            font-size: 0.65rem; text-transform: uppercase; opacity: 0.4; flex-shrink: 0;
+        .btn-analyze:hover { background: #000; transform: translateY(-1px); }
+
+        #results { display: none; margin-top: 50px; border-top: 2px solid var(--slate-100); padding-top: 40px; }
+        .hero-stats { display: flex; gap: 20px; margin-bottom: 40px; }
+        .stat-box {
+            flex: 1;
+            padding: 24px;
+            border-radius: 16px;
+            background: var(--slate-50);
+            text-align: center;
         }
-        .window-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-        /* Timer Features */
-        #win-timer { min-width: 260px; min-height: 280px; }
-        #win-timer.alarm-active { animation: flashAlarm 0.4s infinite; }
-        @keyframes flashAlarm { 0%, 100% { background: var(--panel); } 50% { background: rgba(239, 68, 68, 0.5); } }
-
-        /* UI Elements */
-        .btn-main { width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: white; border: none; cursor: pointer; font-weight: 500; flex-shrink: 0; }
-        .btn-sub { background: var(--glass); border: 1px solid var(--border); padding: 8px; border-radius: 8px; color: white; cursor: pointer; font-size: 0.75rem; }
-        .p-btn { padding: 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--glass); color: white; cursor: pointer; font-size: 0.7rem; }
-        .p-btn.active { background: var(--accent); border-color: var(--accent); }
+        .stat-box.winner { background: #ecfdf5; border: 1px solid #10b981; }
+        .stat-box .val { font-size: 2rem; font-weight: 800; display: block; margin: 8px 0; }
         
-        /* Traffic Light */
-        .light-item { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; opacity: 0.3; transition: 0.3s; }
-        .light-item.active { opacity: 1; }
-        .light-bulb { width: 30px; height: 30px; border-radius: 50%; background: #111; border: 1px solid rgba(255,255,255,0.1); }
-        .active .red { background: var(--red); box-shadow: 0 0 15px var(--red); }
-        .active .yellow { background: var(--yellow); box-shadow: 0 0 15px var(--yellow); }
-        .active .green { background: var(--green); box-shadow: 0 0 15px var(--green); }
+        .breakdown-table { width: 100%; border-collapse: collapse; }
+        .breakdown-table th { text-align: left; padding: 12px; color: #64748b; font-size: 0.75rem; text-transform: uppercase; }
+        .breakdown-table td { padding: 16px 12px; border-bottom: 1px solid var(--slate-50); font-weight: 500; }
+        .row-cat { color: #64748b; font-weight: 400; width: 45%; }
 
-        /* Text Area Placeholder */
-        #teacher-notes::placeholder { color: rgba(255,255,255,0.2); font-style: italic; }
+        .legal-section { margin-top: 100px; padding-bottom: 100px; border-top: 1px solid var(--border); }
+        .legal-content { font-size: 0.9rem; color: #475569; max-width: 700px; margin: 40px auto; }
+        .legal-content h3 { color: var(--slate-900); margin-top: 40px; }
 
-        /* Clock & Date Area */
-        #clock-fixed { position: fixed; bottom: 35px; right: 90px; text-align: right; pointer-events: none; }
-        #greet-area { font-size: 1.3rem; color: var(--accent); }
-        #date-area { font-size: 1.1rem; opacity: 0.7; font-weight: 300; margin-bottom: -5px; }
-        #time { font-size: 4.5rem; font-weight: 300; letter-spacing: -2px; }
+        @media (max-width: 600px) {
+            .input-grid { grid-template-columns: 1fr; }
+            .hero-stats { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
 
-<div id="bg-mesh"></div>
+<div class="container">
+    <header>
+        <h1>Automotive TCO Analysis</h1>
+        <p>Electric vs. Gas Vehicles: 5-Year Total Cost of Ownership Analysis</p>
+    </header>
 
-<div class="sidebar-left" id="sidebar">
-    <button class="sidebar-toggle" onclick="toggleSidebar()">◂</button>
-    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; flex-shrink: 0;">
-        <button class="p-btn active" onclick="setP(0)">P1</button>
-        <button class="p-btn" onclick="setP(1)">P2</button>
-        <button class="p-btn" onclick="setP(2)">P3</button>
-        <button class="p-btn" onclick="setP(3)">P4</button>
-    </div>
-    <textarea id="name-box" placeholder="Student names (one per line)..." oninput="save()"></textarea>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top:10px; flex-shrink: 0;">
-        <button class="btn-sub" onclick="exportNames()">Export</button>
-        <button class="btn-sub" onclick="document.getElementById('import-file').click()">Import</button>
-        <input type="file" id="import-file" style="display:none" onchange="importNames(event)">
-    </div>
-    <div class="ad-container"><span>Advertisement Space</span></div>
-    <div class="footer-links">
-        <span onclick="toggleWin('win-about')">About</span>
-        <span onclick="toggleWin('win-privacy')">Privacy</span>
-    </div>
-</div>
-
-<div class="tool-dock">
-    <button class="dock-btn" data-tooltip="Class Timer" onclick="toggleWin('win-timer')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    </button>
-    <button class="dock-btn" data-tooltip="Pick a Student" onclick="toggleWin('win-picker')">
-        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    </button>
-    <button class="dock-btn" data-tooltip="Voice Levels" onclick="toggleWin('win-traffic')">
-        <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="5" ry="5"></rect><circle cx="12" cy="7" r="2.5"></circle><circle cx="12" cy="12" r="2.5"></circle><circle cx="12" cy="17" r="2.5"></circle></svg>
-    </button>
-    <button class="dock-btn" data-tooltip="Group Maker" onclick="toggleWin('win-groups')">
-        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    </button>
-    <button class="dock-btn" data-tooltip="Teacher Notes" onclick="toggleWin('win-notes')">
-        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-    </button>
-</div>
-
-<div id="win-timer" class="window" style="width: 260px; height: 280px; top: 60px; left: 350px;">
-    <div class="window-header"><span>Timer</span><span onclick="toggleWin('win-timer')" style="cursor:pointer">✕</span></div>
-    <div class="window-content">
-        <div id="t-disp" style="flex-grow:1; display:flex; align-items:center; justify-content:center; font-size: 4rem; color: var(--accent);">0:00</div>
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; margin-bottom:10px;">
-            <button class="btn-sub" onclick="adj(60)">+1m</button>
-            <button class="btn-sub" onclick="adj(10)">+10s</button>
-            <button class="btn-sub" onclick="resetT()">Reset</button>
+    <div class="main-card">
+        <div class="toggle-wrapper">
+            <div class="toggle-pill">
+                <button class="toggle-btn active" id="btnMI" onclick="setUnits('MI')">Miles</button>
+                <button class="toggle-btn" id="btnKM" onclick="setUnits('KM')">Kilometers</button>
+            </div>
         </div>
-        <button class="btn-main" id="t-run" onclick="runT()">Start</button>
-    </div>
-</div>
 
-<div id="win-traffic" class="window" style="width: 200px; height: 220px; top: 60px; left: 870px;">
-    <div class="window-header"><span>Voice Levels</span><span onclick="toggleWin('win-traffic')" style="cursor:pointer">✕</span></div>
-    <div class="window-content">
-        <div id="item-red" class="light-item" onclick="setLight('red')"><div class="light-bulb red"></div><span>Silent</span></div>
-        <div id="item-yellow" class="light-item" onclick="setLight('yellow')"><div class="light-bulb yellow"></div><span>Whisper</span></div>
-        <div id="item-green" class="light-item" onclick="setLight('green')"><div class="light-bulb green"></div><span>Speaking</span></div>
-    </div>
-</div>
+        <div class="input-grid">
+            <div class="section-header">Operational Parameters</div>
+            <div class="field">
+                <label id="lblDist">Annual Distance (Miles)</label>
+                <input type="number" id="dist" value="13500">
+                <span class="hint">National average usage per annum.</span>
+            </div>
+            <div class="field">
+                <label>Ownership Horizon (Years)</label>
+                <input type="number" id="years" value="5">
+            </div>
 
-<div id="win-picker" class="window" style="width: 260px; height: 200px; top: 60px; left: 630px;">
-    <div class="window-header"><span>Student Picker</span><span onclick="toggleWin('win-picker')" style="cursor:pointer">✕</span></div>
-    <div class="window-content">
-        <div id="p-name" style="flex-grow:1; display:flex; align-items:center; justify-content:center; font-size: 1.8rem; color: var(--accent); text-align:center; padding: 10px;">---</div>
-        <div id="p-count-info" style="font-size: 0.65rem; text-align: center; opacity: 0.5; margin-bottom: 5px;"></div>
-        <button class="btn-main" onclick="pick(event)">Pick Student</button>
-    </div>
-</div>
+            <div class="section-header">Asset Valuation (USD)</div>
+            <div class="field">
+                <label>Gas Vehicle Price (MSRP)</label>
+                <input type="number" id="gasPrice" value="36000">
+            </div>
+            <div class="field">
+                <label>EV Price (MSRP)</label>
+                <input type="number" id="evPrice" value="48000">
+            </div>
+            <div class="field">
+                <label>Government Incentives</label>
+                <input type="number" id="rebate" value="7500">
+            </div>
+            <div class="field">
+                <label>L2 Charger Installation</label>
+                <input type="number" id="charger" value="1200">
+            </div>
 
-<div id="win-groups" class="window" style="width: 400px; height: 400px; top: 340px; left: 350px;">
-    <div class="window-header"><span>Group Maker</span><span onclick="toggleWin('win-groups')" style="cursor:pointer">✕</span></div>
-    <div class="window-content">
-        <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px; flex-shrink:0;">
-            <span style="font-size:0.8rem; opacity:0.7">Groups:</span>
-            <input type="number" id="g-count" value="4" min="1" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; border-radius:8px; padding:10px; width:60px;">
-            <button class="btn-main" onclick="doG(event)">Shuffle</button>
+            <div class="section-header">Energy & Risk (USD)</div>
+            <div class="field">
+                <label id="lblGasPrice">Gas Price (per Gallon)</label>
+                <input type="number" id="gasRate" value="3.25" step="0.01">
+            </div>
+            <div class="field">
+                <label>Electric Rate ($/kWh)</label>
+                <input type="number" id="elecRate" value="0.18" step="0.01">
+            </div>
+            <div class="field">
+                <label>Annual Insurance Gap</label>
+                <input type="number" id="insGap" value="650">
+                <span class="hint">Delta between EV and ICE premiums.</span>
+            </div>
         </div>
-        <div id="g-res" style="flex-grow: 1; overflow-y: auto;"></div>
-    </div>
-</div>
 
-<div id="win-notes" class="window" style="width: 320px; height: 350px; top: 260px; left: 630px;">
-    <div class="window-header"><span>Notes</span><span onclick="toggleWin('win-notes')" style="cursor:pointer">✕</span></div>
-    <div class="window-content">
-        <textarea id="teacher-notes" placeholder="Start typing your notes here... (They will auto-save automatically)" oninput="saveNotes()" style="flex-grow:1; background:rgba(0,0,0,0.25); color:#fff; border:1px solid var(--border); border-radius:12px; padding:15px; resize:none; outline:none;"></textarea>
-    </div>
-</div>
+        <button class="btn-analyze" onclick="calculate()">Generate Financial Report</button>
 
-<div id="win-about" class="window" style="width: 450px; height: 300px; top: 150px; left: 400px;">
-    <div class="window-header"><span>About</span><span onclick="toggleWin('win-about')" style="cursor:pointer">✕</span></div>
-    <div class="window-content" style="font-size: 0.9rem; line-height: 1.6; opacity: 0.8; overflow-y: auto;">
-        <h3 style="color:var(--accent); margin-bottom:10px;">Teacher Productivity Suite</h3>
-        <p>Built for efficiency. All student names, group settings, and teacher notes are stored locally in your browser to ensure privacy.</p>
-        <p style="margin-top:10px;">The Student Picker ensures everyone gets a turn before repeating names.</p>
-    </div>
-</div>
+        <div id="results">
+            <div class="hero-stats">
+                <div class="stat-box" id="boxGas">
+                    <span class="section-header" style="border:none; margin:0">ICE (Gasoline)</span>
+                    <span class="val" id="resGasTotal">$0</span>
+                    <span class="hint">5-Year TCO</span>
+                </div>
+                <div class="stat-box" id="boxEv">
+                    <span class="section-header" style="border:none; margin:0">Electric (EV)</span>
+                    <span class="val" id="resEvTotal">$0</span>
+                    <span class="hint">5-Year TCO</span>
+                </div>
+            </div>
 
-<div id="win-privacy" class="window" style="width: 450px; height: 300px; top: 180px; left: 430px;">
-    <div class="window-header"><span>Privacy Policy</span><span onclick="toggleWin('win-privacy')" style="cursor:pointer">✕</span></div>
-    <div class="window-content" style="font-size: 0.9rem; line-height: 1.6; opacity: 0.8; overflow-y: auto;">
-        <h3 style="color:var(--accent); margin-bottom:10px;">Your Data stays Yours</h3>
-        <p>This application does not upload your student names to any server. Everything is stored in your browser's local cache.</p>
-        <p style="margin-top:10px;">Ads are served by Google and may use cookies for personalization.</p>
+            <table class="breakdown-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Gasoline</th>
+                        <th>Electric</th>
+                    </tr>
+                </thead>
+                <tbody id="resBody"></tbody>
+            </table>
+            
+            <div id="verdict" style="margin-top: 30px; padding: 20px; border-radius: 12px; font-weight: 600; text-align: center; border: 1px solid var(--border);"></div>
+        </div>
     </div>
-</div>
 
-<div id="clock-fixed">
-    <div id="greet-area">Good Morning</div>
-    <div id="date-area">Loading Date...</div>
-    <h1 id="time">00:00:00</h1>
+    <div class="legal-section">
+        <div class="legal-content">
+            <h3>About TCO Analyst</h3>
+            <p>Our engine provides a high-fidelity Total Cost of Ownership (TCO) analysis. To remain professional and accurate for 2026, our logic includes <strong>10% energy charging loss</strong> (wall-to-battery), the <strong>"EV Tire Tax"</strong> (shorter tread life due to instant torque and vehicle mass), and real-world insurance premium deltas. We offer this transparency to help consumers navigate the transition to sustainable transport.</p>
+
+            <h3>Privacy Policy</h3>
+            <p>This website uses cookies to enhance user experience and serve advertisements through <strong>Google AdSense</strong>. Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to your website or other websites. Google's use of advertising cookies enables it and its partners to serve ads to your users based on their visit to your sites and/or other sites on the Internet.</p>
+            <p>Users may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank">Ads Settings</a>. Data entered into the calculator is processed locally and is not stored or sold.</p>
+
+            <h3>Disclaimer</h3>
+            <p>All calculations provided are estimates based on user input and 2026 market averages. Actual costs will vary based on driving behavior, specific utility rates, and vehicle reliability. This tool does not constitute financial advice.</p>
+        </div>
+    </div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'teachers_dash_v18';
-    const NOTES_KEY = 'teachers_dash_notes_v18';
-    let pIdx = 0, store = JSON.parse(localStorage.getItem(STORAGE_KEY)) || ["","","",""], secs = 0, tId = null;
-    let pickPiles = [[],[],[],[]]; // Non-repeating student pick piles
+    let mode = 'MI';
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(freq, type, dur) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + dur);
-    }
-
-    function init() {
-        setInterval(tick, 1000); tick();
-        setP(0);
-        document.getElementById('teacher-notes').value = localStorage.getItem(NOTES_KEY) || "";
-        document.querySelectorAll('.window').forEach(makeDraggable);
-    }
-
-    function tick() {
-        const d = new Date();
-        document.getElementById('time').innerText = d.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit', second:'2-digit', hour12: true});
-        const dStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-        document.getElementById('date-area').innerText = dStr.replace(',', '');
-        const h = d.getHours();
-        document.getElementById('greet-area').innerText = h < 12 ? "Good Morning" : h < 17 ? "Good Afternoon" : "Good Evening";
-    }
-
-    function toggleSidebar() {
-        const sb = document.getElementById('sidebar');
-        sb.classList.toggle('collapsed');
-        sb.querySelector('.sidebar-toggle').innerText = sb.classList.contains('collapsed') ? '▸' : '◂';
-    }
-
-    function toggleWin(id) {
-        const w = document.getElementById(id);
-        const vis = w.style.display === 'flex';
-        w.style.display = vis ? 'none' : 'flex';
-        if(!vis) bringToFront(w);
-    }
-
-    function bringToFront(el) {
-        const wins = Array.from(document.querySelectorAll('.window'));
-        const maxZ = Math.max(...wins.map(w => parseInt(w.style.zIndex) || 50));
-        el.style.zIndex = maxZ + 1;
-    }
-
-    function setLight(color) {
-        playSound(600, 'sine', 0.1); 
-        document.querySelectorAll('.light-item').forEach(i => i.classList.remove('active'));
-        document.getElementById(`item-${color}`).classList.add('active');
-    }
-
-    function setP(i) {
-        pIdx = i;
-        document.querySelectorAll('.p-btn').forEach((b, x) => b.classList.toggle('active', x === i));
-        document.getElementById('name-box').value = store[i] || "";
-        resetPickerQueue();
-    }
-
-    function save() { 
-        store[pIdx] = document.getElementById('name-box').value; 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); 
-        resetPickerQueue();
-    }
-    
-    function saveNotes() { localStorage.setItem(NOTES_KEY, document.getElementById('teacher-notes').value); }
-
-    function makeDraggable(el) {
-        let p1=0, p2=0, p3=0, p4=0;
-        const h = el.querySelector(".window-header");
-        h.onmousedown = (e) => {
-            if(e.target.style.cursor === 'pointer') return;
-            bringToFront(el);
-            p3=e.clientX; p4=e.clientY;
-            document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
-            document.onmousemove = (e) => {
-                p1=p3-e.clientX; p2=p4-e.clientY; p3=e.clientX; p4=e.clientY;
-                el.style.top = (el.offsetTop - p2) + "px"; el.style.left = (el.offsetLeft - p1) + "px";
-            };
-        };
-    }
-
-    function importNames(e) {
-        const file = e.target.files[0]; if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => { 
-            document.getElementById('name-box').value = ev.target.result; 
-            save(); 
-            e.target.value = ""; 
-        };
-        reader.readAsText(file);
-    }
-    
-    function exportNames() {
-        const b = new Blob([document.getElementById('name-box').value], {type: "text/plain"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(b);
-        a.download = `Period_${pIdx+1}.txt`;
-        a.click();
-    }
-
-    // Timer Logic
-    function adj(s) { secs = Math.max(0, secs + s); document.getElementById('win-timer').classList.remove('alarm-active'); renderT(); }
-    function resetT() { secs = 0; document.getElementById('win-timer').classList.remove('alarm-active'); renderT(); if(tId) runT(); }
-    function renderT() {
-        const m = Math.floor(secs/60), s = secs%60;
-        document.getElementById('t-disp').innerText = `${m}:${String(s).padStart(2,'0')}`;
-    }
-    function runT() {
-        const b = document.getElementById('t-run'), win = document.getElementById('win-timer');
-        if(tId) { clearInterval(tId); tId=null; b.innerText="Start"; } 
-        else {
-            if(secs <= 0) return;
-            win.classList.remove('alarm-active');
-            b.innerText="Stop";
-            tId = setInterval(() => { 
-                secs--; renderT();
-                if(secs <= 0) { 
-                    clearInterval(tId); tId=null; b.innerText="Start"; 
-                    win.classList.add('alarm-active');
-                    playSound(440, 'square', 1);
-                } 
-            }, 1000);
-        }
-    }
-
-    // NEW STUDENT PICKER LOGIC (NON-REPEATING)
-    function resetPickerQueue() {
-        const names = store[pIdx].split('\n').filter(x => x.trim());
-        pickPiles[pIdx] = [...names].sort(() => 0.5 - Math.random());
-        updatePickerUI(false);
-    }
-
-    function updatePickerUI(shuffled) {
-        const remaining = pickPiles[pIdx].length;
-        const total = store[pIdx].split('\n').filter(x => x.trim()).length;
-        document.getElementById('p-count-info').innerText = shuffled ? `List Reset! ${remaining}/${total} Left` : `${remaining}/${total} names left`;
-    }
-
-    function pick(e) {
-        const totalNames = store[pIdx].split('\n').filter(x => x.trim());
-        if(!totalNames.length) return;
-
-        if (pickPiles[pIdx].length === 0) {
-            pickPiles[pIdx] = [...totalNames].sort(() => 0.5 - Math.random());
-            updatePickerUI(true);
+    function setUnits(u) {
+        mode = u;
+        document.getElementById('btnMI').classList.toggle('active', u === 'MI');
+        document.getElementById('btnKM').classList.toggle('active', u === 'KM');
+        
+        if (u === 'MI') {
+            updateUI("Annual Distance (Miles)", "Gas Price (per Gallon)", 13500, 3.25);
         } else {
-            updatePickerUI(false);
+            updateUI("Annual Distance (KM)", "Gas Price (per Litre)", 21500, 0.86);
+        }
+    }
+
+    function updateUI(distLbl, gasLbl, dVal, gVal) {
+        document.getElementById('lblDist').innerText = distLbl;
+        document.getElementById('lblGasPrice').innerText = gasLbl;
+        document.getElementById('dist').value = dVal;
+        document.getElementById('gasRate').value = gVal;
+    }
+
+    function calculate() {
+        const years = parseFloat(document.getElementById('years').value);
+        const dist = parseFloat(document.getElementById('dist').value);
+        const gPrice = parseFloat(document.getElementById('gasPrice').value);
+        const ePrice = parseFloat(document.getElementById('evPrice').value);
+        const rebate = parseFloat(document.getElementById('rebate').value);
+        const gasRate = parseFloat(document.getElementById('gasRate').value);
+        const eRate = parseFloat(document.getElementById('elecRate').value);
+        const insGap = parseFloat(document.getElementById('insGap').value);
+        const charger = parseFloat(document.getElementById('charger').value);
+
+        const totalDist = dist * years;
+
+        let gasFuel, evEnergy;
+        if(mode === 'MI') {
+            gasFuel = (totalDist / 26) * gasRate;
+            evEnergy = (totalDist / 3.5) * (eRate * 1.1); // 1.1x factor for wall-to-battery loss
+        } else {
+            // Metric: assumes 9L/100km for gas, 18kWh/100km for EV
+            gasFuel = (totalDist / 100) * 9.0 * gasRate;
+            evEnergy = (totalDist / 100) * 18 * (eRate * 1.1);
         }
 
-        const chosen = pickPiles[pIdx].pop();
-        document.getElementById('p-name').innerText = chosen;
-        confetti({ origin: { x: e.clientX/window.innerWidth, y: (e.clientY/window.innerHeight) - 0.1 }, particleCount: 30 });
-    }
+        const gasMaint = (1100 * years);
+        const evMaint = (gasMaint * 0.6) + 1200; // Includes Tire Tax delta
 
-    // Group Maker
-    function doG(e) {
-        const n = store[pIdx].split('\n').filter(x => x.trim()).sort(() => 0.5 - Math.random());
-        const box = document.getElementById('g-res'); if(!n.length) return;
-        const count = parseInt(document.getElementById('g-count').value) || 2;
-        box.innerHTML = ""; let groups = Array.from({length: count}, () => []);
-        n.forEach((name, i) => groups[i % count].push(name));
-        groups.forEach((g, i) => {
-            if(g.length) box.innerHTML += `<div style="margin-bottom:10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border: 1px solid var(--border);"><strong>Group ${i+1}:</strong> ${g.join(', ')}</div>`;
+        const gasIns = 2300 * years;
+        const evIns = (2300 + insGap) * years;
+
+        const gasDep = gPrice * 0.41;
+        const evDep = ePrice * 0.52;
+        const evFees = charger + 400;
+
+        const tcoGas = gasFuel + gasMaint + gasIns + gasDep;
+        const tcoEv = evEnergy + evMaint + evIns + evDep + evFees - rebate;
+
+        const f = v => '$' + Math.round(v).toLocaleString();
+
+        document.getElementById('resGasTotal').innerText = f(tcoGas);
+        document.getElementById('resEvTotal').innerText = f(tcoEv);
+
+        const rows = [
+            ["Fuel / Charging", f(gasFuel), f(evEnergy)],
+            ["Maintenance & Tires", f(gasMaint), f(evMaint)],
+            ["Insurance Costs", f(gasIns), f(evIns)],
+            ["Depreciation Loss", f(gasDep), f(evDep)],
+            ["Hardware & Rebates", "$0", f(evFees - rebate)]
+        ];
+
+        let html = '';
+        rows.forEach(r => {
+            html += `<tr><td class="row-cat">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`;
         });
-        confetti({ origin: { x: e.clientX/window.innerWidth, y: (e.clientY/window.innerHeight) - 0.2 }, particleCount: 40 });
-    }
+        document.getElementById('resBody').innerHTML = html;
 
-    window.onload = init;
+        const verd = document.getElementById('verdict');
+        const boxG = document.getElementById('boxGas');
+        const boxE = document.getElementById('boxEv');
+        boxG.classList.remove('winner'); boxE.classList.remove('winner');
+
+        if(tcoEv < tcoGas) {
+            boxE.classList.add('winner');
+            verd.innerText = `Verdict: EV ownership saves you approximately ${f(tcoGas - tcoEv)} over ${years} years.`;
+        } else {
+            boxG.classList.add('winner');
+            verd.innerText = `Verdict: Gas ownership saves you approximately ${f(tcoEv - tcoGas)} over ${years} years.`;
+        }
+
+        document.getElementById('results').style.display = 'block';
+        window.scrollTo({ top: document.getElementById('results').offsetTop - 50, behavior: 'smooth' });
+    }
 </script>
+
 </body>
 </html>
